@@ -4,6 +4,6 @@ This has:
 
 -   EsLint.
 -   prettier.
--   Pre commit hoot that runs the lint.
+-   Pre commit-hook that runs the lint.
 -   Styled components.
 -   Global mixins styles.
