@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
+import type { AppProps /*, AppContext */ } from 'next/app';
 
 const GlobalStyle = createGlobalStyle`
   html,
@@ -37,7 +38,19 @@ const theme = {
     }
 };
 
-export default function App({ Component, pageProps }) {
+// Only uncomment this method if you have blocking data requirements for
+// every single page in your application. This disables the ability to
+// perform automatic static optimization, causing every page in your app to
+// be server-side rendered.
+//
+// MyApp.getInitialProps = async (appContext: AppContext) => {
+//   // calls page's `getInitialProps` and fills `appProps.pageProps`
+//   const appProps = await App.getInitialProps(appContext);
+
+//   return { ...appProps }
+// }
+
+function App({ Component, pageProps }: AppProps) {
     return (
         <>
             <GlobalStyle />
@@ -47,7 +60,10 @@ export default function App({ Component, pageProps }) {
         </>
     );
 }
+
 App.propTypes = {
     Component: PropTypes.func,
     pageProps: PropTypes.object
 };
+
+export default App;

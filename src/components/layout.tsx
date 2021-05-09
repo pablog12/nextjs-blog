@@ -5,8 +5,8 @@ import Link from 'next/link';
 import styled from 'styled-components';
 import * as S from '../styles';
 
-const name = 'Flare';
-export const siteTitle = 'Next.js Sample Website';
+const name = 'Thaloz';
+export const siteTitle = 'Thaloz Recruiting';
 
 const Container = styled.div`
     max-width: 36rem;
@@ -40,15 +40,12 @@ const H2 = styled.h2`
     ${S.mixins.headingLg};
 `;
 
-export default function Layout({ children, home }) {
+function Layout({ children, home }) {
     return (
         <Container>
             <Head>
                 <link rel="icon" href="/favicon.ico" />
-                <meta
-                    name="description"
-                    content="Learn how to build a personal website using Next.js"
-                />
+                <meta name="description" content="Thaloz Recruiting" />
                 <meta
                     property="og:image"
                     content={`https://og-image.vercel.app/${encodeURI(
@@ -107,3 +104,5 @@ Layout.propTypes = {
     children: PropTypes.array,
     home: PropTypes.bool
 };
+
+export default Layout;
