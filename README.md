@@ -1,1 +1,9 @@
-This is a starter template for [Learn Next.js](https://nextjs.org/learn).
+# Blog example
+
+This has:
+
+-   EsLint.
+-   prettier.
+-   Pre commit hoot that runs the lint.
+-   Styled components.
+-   Global mixins styles.
