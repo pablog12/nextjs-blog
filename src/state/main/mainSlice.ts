@@ -102,6 +102,8 @@ export const slice = createSlice({
             userAccountInfo.is_superuser = action.payload.data.is_superuser;
 
             state.userAccount = userAccountInfo;
+
+            // FIXME: this gives a serialization error.
         }
     }
 });
