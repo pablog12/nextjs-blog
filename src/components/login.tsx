@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useSelector, useDispatch } from 'react-redux';
-import { LogIn } from '@/state/main/actions';
-import { selectToken, selectUserAccount } from '../state/main/mainSlice';
+import {
+    selectToken,
+    selectUserAccount,
+    actionLogIn,
+    actionGetUserAccount,
+    setLogInError,
+    setLoggedIn,
+    addNotification
+} from '../state/main/mainSlice';
+
+import { unwrapResult } from '@reduxjs/toolkit';
 
 const ButtonLogIn = styled.button`
     background-color: #4caf50; /* Green */
@@ -23,25 +32,30 @@ const ButtonLogIn = styled.button`
     }
 `;
 
-const handleClickLogIn = async (event) => {
-    event.preventDefault();
-
+export function Login() {
+    const [email, setEmail] = useState('admin@thaloz.com');
+    const [password, setPassword] = useState('admin');
+    const token = useSelector(selectToken);
+    const user = useSelector(selectUserAccount);
     const dispatch = useDispatch();
 
-    var user = 'admin@thaloz.com';
-    var pass = 'admin';
+    const onLoginClicked = () => {
+        dispatch(actionLogIn({ username: email, password: password }))
+            .then(unwrapResult)
+            .then(async (sucess) => {
+                dispatch(setLoggedIn(true));
+                dispatch(setLogInError(false));
+                dispatch(actionGetUserAccount(sucess));
+                // await RouteLoggedIn();
+                dispatch(addNotification({ content: 'Logged in', color: 'success' }));
+            })
+            .catch((error) => {
+                console.error('Failed to login: ', error);
+                dispatch(setLogInError(true));
+                // await LogOut();
+            });
+    };
 
-    try {
-        dispatch(LogIn({ username: user, password: pass }));
-    } catch (error) {
-        console.log(error);
-    }
-};
-
-export function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const token = useSelector(selectToken);
     return (
         <div>
             <input
@@ -56,7 +70,7 @@ export function Login() {
                 id="password"
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}></input>
-            <ButtonLogIn onClick={handleClickLogIn}>Login</ButtonLogIn>
+            <ButtonLogIn onClick={onLoginClicked}>Login</ButtonLogIn>
             <p>token: {token}</p>
         </div>
     );

@@ -1,5 +1,8 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { MainState } from './state';
+import { api } from '@/api';
+import { getLocalToken, removeLocalToken, saveLocalToken } from '@/utils';
+import { IUserAccount } from '../../interfaces';
 
 const initialState: MainState = {
     isLoggedIn: null,
@@ -11,6 +14,37 @@ const initialState: MainState = {
     dashboardShowDrawer: true,
     notifications: []
 };
+
+// The function below is called a thunk and allows us to perform async logic.
+// It can be dispatched like a regular action: `dispatch(incrementAsync(10))`.
+// This will call the thunk with the `dispatch` function as the first argument.
+// Async code can then be executed and other actions can be dispatched
+
+export const actionLogIn = createAsyncThunk(
+    'auth/Login',
+    async (payload: { username: string; password: string }) => {
+        try {
+            const response = await api.logInGetToken(payload.username, payload.password);
+            const token = response.data.access_token;
+            saveLocalToken(token);
+            return token;
+        } catch (err) {
+            console.error('Failed to login: ', err);
+        }
+    }
+);
+
+export const actionGetUserAccount = createAsyncThunk(
+    'user/GetAccount',
+    async (userToken: string) => {
+        try {
+            const response = await api.getMe(userToken);
+            return response;
+        } catch (err) {
+            console.error('Failed to login: ', err);
+        }
+    }
+);
 
 export const slice = createSlice({
     name: 'main',
@@ -44,6 +78,30 @@ export const slice = createSlice({
             state.notifications = state.notifications.filter(
                 (notification) => notification !== action.payload
             );
+        }
+    },
+    extraReducers: {
+        // Add reducers for additional action types here, and handle loading state as needed
+        [actionLogIn.fulfilled]: (state, action) => {
+            state.token = action.payload;
+        },
+        [actionGetUserAccount.fulfilled]: (state, action) => {
+            // Add user to the state array
+            const userAccountInfo: IUserAccount = {
+                email: '',
+                full_name: '',
+                id: null,
+                is_active: null,
+                is_superuser: null
+            };
+
+            userAccountInfo.email = action.payload.data.email;
+            userAccountInfo.full_name = action.payload.data.full_name;
+            userAccountInfo.id = action.payload.data.id;
+            userAccountInfo.is_active = action.payload.data.is_active;
+            userAccountInfo.is_superuser = action.payload.data.is_superuser;
+
+            state.userAccount = userAccountInfo;
         }
     }
 });

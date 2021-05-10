@@ -1,7 +1,7 @@
 import { api } from '@/api';
 import { getLocalToken, removeLocalToken, saveLocalToken } from '@/utils';
 import { AxiosError } from 'axios';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import {
     addNotification,
     removeNotification,
