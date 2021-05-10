@@ -5,7 +5,7 @@ import * as S from '../styles';
 
 import { appName, appVersion } from '@/env';
 
-import { LoginBar } from '../components/loginBar';
+import { Login } from '../components/login';
 
 const SectionHeading = styled.section`
     ${S.mixins.headingMd}
@@ -23,7 +23,7 @@ function Home() {
                 </p>
             </SectionHeading>
             <section>
-                <LoginBar />
+                <Login />
             </section>
         </Layout>
     );

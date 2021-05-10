@@ -1,7 +1,7 @@
 import { api } from '@/api';
 import { getLocalToken, removeLocalToken, saveLocalToken } from '@/utils';
 import { AxiosError } from 'axios';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
     addNotification,
     removeNotification,
@@ -25,15 +25,15 @@ export const actions = {
                 setToken(token);
                 setLoggedIn(true);
                 setLogInError(false);
-                await dispatchGetUserAccount();
-                await dispatchRouteLoggedIn();
+                await GetUserAccount();
+                await RouteLoggedIn();
                 addNotification({ content: 'Logged in', color: 'success' });
             } else {
-                await dispatchLogOut();
+                await LogOut();
             }
         } catch (err) {
             setLogInError(true);
-            await dispatchLogOut();
+            await LogOut();
         }
     },
     async actionGetUserAccount() {
@@ -43,7 +43,7 @@ export const actions = {
                 setUserAccount(response.data);
             }
         } catch (error) {
-            await dispatchCheckApiError(error);
+            await CheckApiError(error);
         }
     },
     async actionUpdateUserAccount(payload) {
@@ -63,7 +63,7 @@ export const actions = {
                 color: 'success'
             });
         } catch (error) {
-            await dispatchCheckApiError(error);
+            await CheckApiError(error);
         }
     },
     async actionUpdateUserProfile(payload) {
@@ -84,7 +84,7 @@ export const actions = {
                 color: 'success'
             });
         } catch (error) {
-            await dispatchCheckApiError(error);
+            await CheckApiError(error);
         }
     },
     async actionCheckLoggedIn() {
@@ -103,10 +103,10 @@ export const actions = {
                     setLoggedIn(true);
                     setUserAccount(response.data);
                 } catch (error) {
-                    await dispatchRemoveLogIn();
+                    await RemoveLogIn();
                 }
             } else {
-                await dispatchRemoveLogIn();
+                await RemoveLogIn();
             }
         }
     },
@@ -116,11 +116,11 @@ export const actions = {
         setLoggedIn(false);
     },
     async actionLogOut() {
-        await dispatchRemoveLogIn();
-        await dispatchRouteLogOut();
+        await RemoveLogIn();
+        await RouteLogOut();
     },
     async actionUserLogOut() {
-        await dispatchLogOut();
+        await LogOut();
         addNotification({ content: 'Logged out', color: 'success' });
     },
     actionRouteLogOut() {
@@ -131,7 +131,7 @@ export const actions = {
     },
     async actionCheckApiError(payload: AxiosError) {
         if (payload.response!.status === 401) {
-            await dispatchLogOut();
+            await LogOut();
         }
     },
     actionRouteLoggedIn() {
@@ -166,7 +166,7 @@ export const actions = {
                 content: 'Password recovery email sent',
                 color: 'success'
             });
-            await dispatchLogOut();
+            await LogOut();
         } catch (error) {
             removeNotification(loadingNotification);
             addNotification({ color: 'error', content: 'Incorrect username' });
@@ -187,7 +187,7 @@ export const actions = {
                 content: 'Password successfully reset',
                 color: 'success'
             });
-            await dispatchLogOut();
+            await LogOut();
         } catch (error) {
             removeNotification(loadingNotification);
             addNotification({ color: 'error', content: 'Error resetting password' });
@@ -195,19 +195,17 @@ export const actions = {
     }
 };
 
-const dispatch = useDispatch();
-
-export const dispatchCheckApiError = dispatch(actions.actionCheckApiError);
-export const dispatchCheckLoggedIn = dispatch(actions.actionCheckLoggedIn);
-export const dispatchGetUserAccount = dispatch(actions.actionGetUserAccount);
-export const dispatchLogIn = dispatch(actions.actionLogIn);
-export const dispatchLogOut = dispatch(actions.actionLogOut);
-export const dispatchUserLogOut = dispatch(actions.actionUserLogOut);
-export const dispatchRemoveLogIn = dispatch(actions.actionRemoveLogIn);
-export const dispatchRouteLoggedIn = dispatch(actions.actionRouteLoggedIn);
-export const dispatchRouteLogOut = dispatch(actions.actionRouteLogOut);
-export const dispatchUpdateUserAccount = dispatch(actions.actionUpdateUserAccount);
-export const dispatchUpdateUserProfile = dispatch(actions.actionUpdateUserProfile);
-export const dispatchremoveNotification = dispatch(actions.removeNotification);
-export const dispatchPasswordRecovery = dispatch(actions.passwordRecovery);
-export const dispatchResetPassword = dispatch(actions.resetPassword);
+export const CheckApiError = actions.actionCheckApiError;
+export const CheckLoggedIn = actions.actionCheckLoggedIn;
+export const GetUserAccount = actions.actionGetUserAccount;
+export const LogIn = actions.actionLogIn;
+export const LogOut = actions.actionLogOut;
+export const UserLogOut = actions.actionUserLogOut;
+export const RemoveLogIn = actions.actionRemoveLogIn;
+export const RouteLoggedIn = actions.actionRouteLoggedIn;
+export const RouteLogOut = actions.actionRouteLogOut;
+export const UpdateUserAccount = actions.actionUpdateUserAccount;
+export const UpdateUserProfile = actions.actionUpdateUserProfile;
+export const RemoveNotification = actions.removeNotification;
+export const PasswordRecovery = actions.passwordRecovery;
+export const ResetPassword = actions.resetPassword;
