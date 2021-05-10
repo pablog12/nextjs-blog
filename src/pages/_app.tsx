@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import type { AppProps /*, AppContext */ } from 'next/app';
+import store from '../state/store';
+import { Provider } from 'react-redux';
 
 const GlobalStyle = createGlobalStyle`
   html,
@@ -53,10 +55,12 @@ const theme = {
 function App({ Component, pageProps }: AppProps) {
     return (
         <>
-            <GlobalStyle />
-            <ThemeProvider theme={theme}>
-                <Component {...pageProps} />
-            </ThemeProvider>
+            <Provider store={store}>
+                <GlobalStyle />
+                <ThemeProvider theme={theme}>
+                    <Component {...pageProps} />
+                </ThemeProvider>
+            </Provider>
         </>
     );
 }

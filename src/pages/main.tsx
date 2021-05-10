@@ -5,13 +5,11 @@ import * as S from '../styles';
 
 import { appName, appVersion } from '@/env';
 
-import { LoginBar } from '../components/loginBar';
-
 const SectionHeading = styled.section`
     ${S.mixins.headingMd}
 `;
 
-function Home() {
+function Main() {
     return (
         <Layout home>
             <Head>
@@ -23,10 +21,10 @@ function Home() {
                 </p>
             </SectionHeading>
             <section>
-                <LoginBar />
+                <p>You are logged in.</p>
             </section>
         </Layout>
     );
 }
 
-export default Home;
+export default Main;
