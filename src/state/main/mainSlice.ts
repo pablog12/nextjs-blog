@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { MainState } from './state';
 import { api } from '@/api';
-import { getLocalToken, removeLocalToken, saveLocalToken } from '@/utils';
+import { removeLocalToken, saveLocalToken } from '@/utils';
 import { IUserAccount } from '../../interfaces';
 
 const initialState: MainState = {
@@ -20,7 +20,7 @@ const initialState: MainState = {
 // This will call the thunk with the `dispatch` function as the first argument.
 // Async code can then be executed and other actions can be dispatched
 
-export const actionLogIn = createAsyncThunk(
+export const commitGetToken = createAsyncThunk(
     'auth/Login',
     async (payload: { username: string; password: string }) => {
         try {
@@ -34,7 +34,7 @@ export const actionLogIn = createAsyncThunk(
     }
 );
 
-export const actionGetUserAccount = createAsyncThunk(
+export const commitGetUserAccount = createAsyncThunk(
     'user/GetAccount',
     async (userToken: string) => {
         try {
@@ -45,6 +45,14 @@ export const actionGetUserAccount = createAsyncThunk(
         }
     }
 );
+
+export const commitRemoveLogIn = createAsyncThunk('user/RemoveLogIn', async () => {
+    try {
+        removeLocalToken();
+    } catch (err) {
+        console.error('Failed to remove login: ', err);
+    }
+});
 
 export const slice = createSlice({
     name: 'main',
@@ -82,10 +90,10 @@ export const slice = createSlice({
     },
     extraReducers: {
         // Add reducers for additional action types here, and handle loading state as needed
-        [actionLogIn.fulfilled]: (state, action) => {
+        [commitGetToken.fulfilled.toString()]: (state, action: PayloadAction<string>) => {
             state.token = action.payload;
         },
-        [actionGetUserAccount.fulfilled]: (state, action) => {
+        [commitGetUserAccount.fulfilled.toString()]: (state, action: PayloadAction<any>) => {
             // Add user to the state array
             const userAccountInfo: IUserAccount = {
                 email: '',
@@ -102,8 +110,10 @@ export const slice = createSlice({
             userAccountInfo.is_superuser = action.payload.data.is_superuser;
 
             state.userAccount = userAccountInfo;
-
-            // FIXME: this gives a serialization error.
+        },
+        [commitRemoveLogIn.fulfilled.toString()]: (state) => {
+            state.token = '';
+            state.isLoggedIn = false;
         }
     }
 });

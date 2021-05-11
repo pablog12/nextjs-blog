@@ -1,7 +1,7 @@
 import { api } from '@/api';
-import { getLocalToken, removeLocalToken, saveLocalToken } from '@/utils';
+import { getLocalToken, removeLocalToken } from '@/utils';
 import { AxiosError } from 'axios';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
     addNotification,
     removeNotification,
@@ -9,67 +9,78 @@ import {
     setLogInError,
     setToken,
     setUserAccount,
-    setUserProfile
+    setUserProfile,
+    commitGetToken
 } from './mainSlice';
 import { selectToken, selectIsLoggedIn, selectUserAccount } from './mainSlice';
 import { AppNotification } from './state';
-import { useRouter } from 'next/router';
+import { unwrapResult } from '@reduxjs/toolkit';
 
 export const actions = {
-    async actionLogIn(payload: { username: string; password: string }) {
-        try {
-            const response = await api.logInGetToken(payload.username, payload.password);
-            const token = response.data.access_token;
-            if (token) {
-                saveLocalToken(token);
-                setToken(token);
-                setLoggedIn(true);
-                setLogInError(false);
-                await GetUserAccount();
-                await RouteLoggedIn();
-                addNotification({ content: 'Logged in', color: 'success' });
-            } else {
-                await LogOut();
-            }
-        } catch (err) {
-            setLogInError(true);
-            await LogOut();
+    dispatchRouteLoggedIn(router) {
+        if (router.pathname === '/login' || router.pathname === '/') {
+            router.push('/main');
         }
     },
-    async actionGetUserAccount() {
+    dispatchRouteLogOut(router) {
+        if (router.pathname !== '/') {
+            router.push('/');
+        }
+    },
+    async dispatchLogIn(dispatcher, router, payload: { username: string; password: string }) {
+        dispatcher(commitGetToken({ username: payload.username, password: payload.password }))
+            .then(unwrapResult)
+            .then(async (result) => {
+                if (result) {
+                    dispatcher(setLoggedIn(true));
+                    dispatcher(setLogInError(false));
+                    await dispatchGetUserAccount(dispatcher, router, result);
+                    // await dispatchRouteLoggedIn(router);
+                    dispatcher(addNotification({ content: 'Logged in', color: 'success' }));
+                }
+            })
+            .catch((error) => {
+                console.error('Failed to login: ', error);
+                dispatcher(setLogInError(true));
+                dispatchLogOut(dispatcher, router);
+            });
+    },
+    async dispatchGetUserAccount(dispatcher, router, token) {
         try {
-            const response = await api.getMe(useSelector(selectToken));
+            const response = await api.getMe(token);
             if (response.data) {
-                setUserAccount(response.data);
+                dispatcher(setUserAccount(response.data));
             }
         } catch (error) {
-            await CheckApiError(error);
+            await dispatchCheckApiError(dispatcher, router, error);
         }
     },
-    async actionUpdateUserAccount(payload) {
+    async dispatchUpdateUserAccount(dispatcher, router, payload) {
         try {
             const loadingNotification = { content: 'saving', showProgress: true };
-            addNotification(loadingNotification);
+            dispatcher(addNotification(loadingNotification));
             const response = (
                 await Promise.all([
                     api.updateMe(useSelector(selectToken), payload),
                     await new Promise((resolve, reject) => setTimeout(() => resolve(), 500))
                 ])
             )[0];
-            setUserAccount(response.data);
-            removeNotification(loadingNotification);
-            addNotification({
-                content: 'Account successfully updated',
-                color: 'success'
-            });
+            dispatcher(setUserAccount(response.data));
+            dispatcher(removeNotification(loadingNotification));
+            dispatcher(
+                addNotification({
+                    content: 'Account successfully updated',
+                    color: 'success'
+                })
+            );
         } catch (error) {
-            await CheckApiError(error);
+            await dispatchCheckApiError(dispatcher, router, error);
         }
     },
-    async actionUpdateUserProfile(payload) {
+    async dispatchUpdateUserProfile(dispatcher, router, payload) {
         try {
             const loadingNotification = { content: 'saving', showProgress: true };
-            addNotification(loadingNotification);
+            dispatcher(addNotification(loadingNotification));
             const profileId = useSelector(selectUserAccount).profile[0].id;
             const response = (
                 await Promise.all([
@@ -77,135 +88,135 @@ export const actions = {
                     await new Promise((resolve, reject) => setTimeout(() => resolve(), 500))
                 ])
             )[0];
-            setUserProfile(response.data);
-            removeNotification(loadingNotification);
-            addNotification({
-                content: 'Profile successfully updated',
-                color: 'success'
-            });
+            dispatcher(setUserProfile(response.data));
+            dispatcher(removeNotification(loadingNotification));
+            dispatcher(
+                addNotification({
+                    content: 'Profile successfully updated',
+                    color: 'success'
+                })
+            );
         } catch (error) {
-            await CheckApiError(error);
+            await dispatchCheckApiError(dispatcher, router, error);
         }
     },
-    async actionCheckLoggedIn() {
+    async dispatchCheckLoggedIn(dispatcher) {
         if (!useSelector(selectIsLoggedIn)) {
             let token = useSelector(selectToken);
             if (!token) {
                 const localToken = getLocalToken();
                 if (localToken) {
-                    setToken(localToken);
+                    dispatcher(setToken(localToken));
                     token = localToken;
                 }
             }
             if (token) {
                 try {
                     const response = await api.getMe(token);
-                    setLoggedIn(true);
-                    setUserAccount(response.data);
+                    dispatcher(setLoggedIn(true));
+                    dispatcher(setUserAccount(response.data));
                 } catch (error) {
-                    await RemoveLogIn();
+                    await dispatchRemoveLogIn(dispatcher);
                 }
             } else {
-                await RemoveLogIn();
+                await dispatchRemoveLogIn(dispatcher);
             }
         }
     },
-    async actionRemoveLogIn() {
+    async dispatchRemoveLogIn(dispatcher) {
         removeLocalToken();
-        setToken('');
-        setLoggedIn(false);
+        dispatcher(setToken(''));
+        dispatcher(setLoggedIn(false));
     },
-    async actionLogOut() {
-        await RemoveLogIn();
-        await RouteLogOut();
+    async dispatchLogOut(dispatcher, router) {
+        await dispatchRemoveLogIn(dispatcher);
+        await dispatchRouteLogOut(router);
     },
-    async actionUserLogOut() {
-        await LogOut();
-        addNotification({ content: 'Logged out', color: 'success' });
+    async dispatchUserLogOut(dispatcher, router) {
+        await dispatchLogOut(dispatcher, router);
+        dispatcher(addNotification({ content: 'Logged out', color: 'success' }));
     },
-    actionRouteLogOut() {
-        const router = useRouter();
-        if (router.pathname !== '/login') {
-            router.push('/login');
-        }
-    },
-    async actionCheckApiError(payload: AxiosError) {
+    async CheckApiError(dispatcher, router, payload: AxiosError) {
         if (payload.response!.status === 401) {
-            await LogOut();
+            await dispatchLogOut(dispatcher, router);
         }
     },
-    actionRouteLoggedIn() {
-        const router = useRouter();
-        if (router.pathname === '/login' || router.pathname === '/') {
-            router.push('/main');
+    async dispatchRemoveNotification(
+        dispatcher,
+        payload: {
+            notification: AppNotification;
+            timeout: number;
         }
-    },
-    async removeNotification(payload: { notification: AppNotification; timeout: number }) {
+    ) {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                removeNotification(payload.notification);
+                dispatcher(removeNotification(payload.notification));
                 resolve(true);
             }, payload.timeout);
         });
     },
-    async passwordRecovery(payload: { username: string }) {
+    async dispatchPasswordRecovery(dispatcher, router, payload: { username: string }) {
         const loadingNotification = {
             content: 'Sending password recovery email',
             showProgress: true
         };
         try {
-            addNotification(loadingNotification);
+            dispatcher(addNotification(loadingNotification));
             const response = (
                 await Promise.all([
                     api.passwordRecovery(payload.username),
                     await new Promise((resolve, reject) => setTimeout(() => resolve(), 500))
                 ])
             )[0];
-            removeNotification(loadingNotification);
-            addNotification({
-                content: 'Password recovery email sent',
-                color: 'success'
-            });
-            await LogOut();
+            dispatcher(removeNotification(loadingNotification));
+            dispatcher(
+                addNotification({
+                    content: 'Password recovery email sent',
+                    color: 'success'
+                })
+            );
+            await dispatchLogOut(dispatcher, router);
         } catch (error) {
-            removeNotification(loadingNotification);
-            addNotification({ color: 'error', content: 'Incorrect username' });
+            dispatcher(removeNotification(loadingNotification));
+            dispatcher(addNotification({ color: 'error', content: 'Incorrect username' }));
         }
     },
-    async resetPassword(payload: { password: string; token: string }) {
+    async dispatchResetPassword(dispatcher, router, payload: { password: string; token: string }) {
         const loadingNotification = { content: 'Resetting password', showProgress: true };
         try {
-            addNotification(loadingNotification);
+            dispatcher(addNotification(loadingNotification));
             const response = (
                 await Promise.all([
                     api.resetPassword(payload.password, payload.token),
                     await new Promise((resolve, reject) => setTimeout(() => resolve(), 500))
                 ])
             )[0];
-            removeNotification(loadingNotification);
-            addNotification({
-                content: 'Password successfully reset',
-                color: 'success'
-            });
-            await LogOut();
+            dispatcher(removeNotification(loadingNotification));
+            dispatcher(
+                addNotification({
+                    content: 'Password successfully reset',
+                    color: 'success'
+                })
+            );
+            await dispatchLogOut(dispatcher, router);
         } catch (error) {
-            removeNotification(loadingNotification);
-            addNotification({ color: 'error', content: 'Error resetting password' });
+            dispatcher(removeNotification(loadingNotification));
+            dispatcher(addNotification({ color: 'error', content: 'Error resetting password' }));
         }
     }
 };
 
-export const CheckApiError = actions.actionCheckApiError;
-export const CheckLoggedIn = actions.actionCheckLoggedIn;
-export const GetUserAccount = actions.actionGetUserAccount;
-export const LogIn = actions.actionLogIn;
-export const LogOut = actions.actionLogOut;
-export const UserLogOut = actions.actionUserLogOut;
-export const RemoveLogIn = actions.actionRemoveLogIn;
-export const RouteLoggedIn = actions.actionRouteLoggedIn;
-export const RouteLogOut = actions.actionRouteLogOut;
-export const UpdateUserAccount = actions.actionUpdateUserAccount;
-export const UpdateUserProfile = actions.actionUpdateUserProfile;
-export const RemoveNotification = actions.removeNotification;
-export const PasswordRecovery = actions.passwordRecovery;
-export const ResetPassword = actions.resetPassword;
+export const dispatchCheckLoggedIn = actions.dispatchCheckLoggedIn;
+export const dispatchGetUserAccount = actions.dispatchGetUserAccount;
+export const dispatchLogIn = actions.dispatchLogIn;
+export const dispatchLogOut = actions.dispatchLogOut;
+export const dispatchUserLogOut = actions.dispatchUserLogOut;
+export const dispatchRemoveLogIn = actions.dispatchRemoveLogIn;
+export const dispatchRouteLoggedIn = actions.dispatchRouteLoggedIn;
+export const dispatchRouteLogOut = actions.dispatchRouteLogOut;
+export const dispatchUpdateUserAccount = actions.dispatchUpdateUserAccount;
+export const dispatchUpdateUserProfile = actions.dispatchUpdateUserProfile;
+export const dispatchRemoveNotification = actions.dispatchRemoveNotification;
+export const dispatchPasswordRecovery = actions.dispatchPasswordRecovery;
+export const dispatchResetPassword = actions.dispatchResetPassword;
+export const dispatchCheckApiError = actions.CheckApiError;

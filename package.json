@@ -7,9 +7,10 @@
         "build": "next build",
         "start": "next start",
         "format": "prettier --ignore-path .gitignore --write . --config ./.prettierrc",
-        "lint:fix": "tsc --noEmit && eslint . --quiet --fix"
+        "lint:fix": "tsc --noEmit && eslint . --ignore-path .gitignore --quiet --fix"
     },
     "dependencies": {
+        "@material-ui/core": "^4.11.4",
         "@reduxjs/toolkit": "^1.5.1",
         "axios": "^0.21.1",
         "date-fns": "^2.21.3",

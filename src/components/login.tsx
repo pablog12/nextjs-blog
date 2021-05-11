@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-    selectToken,
-    selectUserAccount,
-    actionLogIn,
-    actionGetUserAccount,
-    setLogInError,
-    setLoggedIn,
-    addNotification
-} from '../state/main/mainSlice';
+import { selectUserAccount, selectIsLoggedIn } from '../state/main/mainSlice';
 
-import { unwrapResult } from '@reduxjs/toolkit';
+import { dispatchLogIn, dispatchLogOut } from '../state/main/actions';
+import { useRouter } from 'next/router';
 
 const ButtonLogIn = styled.button`
     background-color: #4caf50; /* Green */
@@ -32,29 +25,38 @@ const ButtonLogIn = styled.button`
     }
 `;
 
+const ButtonLogOut = styled(ButtonLogIn)`
+    background-color: #af4c6a;
+    &:hover {
+        color: #af4c6a;
+    }
+`;
+
 export function Login() {
     const [email, setEmail] = useState('admin@thaloz.com');
     const [password, setPassword] = useState('admin');
-    const token = useSelector(selectToken);
-    const user = useSelector(selectUserAccount);
-    const dispatch = useDispatch();
 
-    const onLoginClicked = () => {
-        dispatch(actionLogIn({ username: email, password: password }))
-            .then(unwrapResult)
-            .then(async (sucess) => {
-                dispatch(setLoggedIn(true));
-                dispatch(setLogInError(false));
-                dispatch(actionGetUserAccount(sucess));
-                // await RouteLoggedIn();
-                dispatch(addNotification({ content: 'Logged in', color: 'success' }));
-            })
-            .catch((error) => {
-                console.error('Failed to login: ', error);
-                dispatch(setLogInError(true));
-                // await LogOut();
-            });
+    const user = useSelector(selectUserAccount);
+    const isLoggedIn = useSelector(selectIsLoggedIn);
+
+    const dispatcher = useDispatch();
+    const router = useRouter();
+
+    const LogInClick = () => {
+        dispatchLogIn(dispatcher, router, { username: email, password: password });
     };
+
+    const LogOutClick = () => {
+        dispatchLogOut(dispatcher, router);
+    };
+
+    let AuthButton;
+
+    if (isLoggedIn) {
+        AuthButton = <ButtonLogOut onClick={LogOutClick}>LogOut</ButtonLogOut>;
+    } else {
+        AuthButton = <ButtonLogIn onClick={LogInClick}>Login</ButtonLogIn>;
+    }
 
     return (
         <div>
@@ -70,8 +72,8 @@ export function Login() {
                 id="password"
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}></input>
-            <ButtonLogIn onClick={onLoginClicked}>Login</ButtonLogIn>
-            <p>token: {token}</p>
+            {AuthButton}
+            {isLoggedIn ? <p>Logged in as: {user.email}</p> : <p>Not logged in</p>}
         </div>
     );
 }
