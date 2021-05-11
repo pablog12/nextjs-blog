@@ -1,73 +1,42 @@
-import PropTypes from 'prop-types';
-import { createGlobalStyle, ThemeProvider } from 'styled-components';
-import type { AppProps /*, AppContext */ } from 'next/app';
+import App from 'next/app';
+import Head from 'next/head';
 import store from '../state/store';
 import { Provider } from 'react-redux';
+import { ThemeProvider } from '@material-ui/styles';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import theme from '../theme';
 
-const GlobalStyle = createGlobalStyle`
-  html,
-  body {
-    padding: 0;
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-      Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-    line-height: 1.6;
-    font-size: 18px;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  a {
-    color: #0070f3;
-    text-decoration: none;
-  }
-
-  a:hover {
-    text-decoration: underline;
-  }
-
-  img {
-    max-width: 100%;
-    display: block;
-  }
-`;
-
-const theme = {
-    colors: {
-        primary: '#0070f3'
+class MyApp extends App {
+    componentDidMount() {
+        // Remove the server-side injected CSS.
+        const jssStyles = document.querySelector('#jss-server-side');
+        if (jssStyles) {
+            jssStyles.parentNode.removeChild(jssStyles);
+        }
     }
-};
 
-// Only uncomment this method if you have blocking data requirements for
-// every single page in your application. This disables the ability to
-// perform automatic static optimization, causing every page in your app to
-// be server-side rendered.
-//
-// MyApp.getInitialProps = async (appContext: AppContext) => {
-//   // calls page's `getInitialProps` and fills `appProps.pageProps`
-//   const appProps = await App.getInitialProps(appContext);
+    render() {
+        const { Component, pageProps } = this.props;
 
-//   return { ...appProps }
-// }
-
-function App({ Component, pageProps }: AppProps) {
-    return (
-        <>
-            <Provider store={store}>
-                <GlobalStyle />
-                <ThemeProvider theme={theme}>
-                    <Component {...pageProps} />
-                </ThemeProvider>
-            </Provider>
-        </>
-    );
+        return (
+            <>
+                <Head>
+                    <title>My page</title>
+                    <meta
+                        name="viewport"
+                        content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
+                    />
+                </Head>
+                <Provider store={store}>
+                    <ThemeProvider theme={theme}>
+                        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+                        <CssBaseline />
+                        <Component {...pageProps} />
+                    </ThemeProvider>
+                </Provider>
+            </>
+        );
+    }
 }
 
-App.propTypes = {
-    Component: PropTypes.func,
-    pageProps: PropTypes.object
-};
-
-export default App;
+export default MyApp;
