@@ -8,12 +8,25 @@ const initialState: MainState = {
     isLoggedIn: null,
     token: '',
     logInError: false,
+    logInErrMsg: '',
     userAccount: null,
     userProfile: null,
     dashboardMiniDrawer: false,
     dashboardShowDrawer: true,
     notifications: []
 };
+
+interface TokenResponse {
+    token: string;
+    error: boolean;
+    error_message: string;
+}
+
+interface UserAccResponse {
+    userAcc: any;
+    error: boolean;
+    error_message: string;
+}
 
 // The function below is called a thunk and allows us to perform async logic.
 // It can be dispatched like a regular action: `dispatch(incrementAsync(10))`.
@@ -27,9 +40,9 @@ export const commitGetToken = createAsyncThunk(
             const response = await api.logInGetToken(payload.username, payload.password);
             const token = response.data.access_token;
             saveLocalToken(token);
-            return token;
+            return { token: token, error: false, error_message: null };
         } catch (err) {
-            console.error('Failed to login: ', err);
+            return { token: null, error: true, error_message: err.name + ' ' + err.message };
         }
     }
 );
@@ -39,9 +52,9 @@ export const commitGetUserAccount = createAsyncThunk(
     async (userToken: string) => {
         try {
             const response = await api.getMe(userToken);
-            return response;
+            return { userAcc: response, error: false, error_message: null };
         } catch (err) {
-            console.error('Failed to login: ', err);
+            return { userAcc: null, error: true, error_message: err.name + ' ' + err.message };
         }
     }
 );
@@ -51,6 +64,7 @@ export const commitRemoveLogIn = createAsyncThunk('user/RemoveLogIn', async () =
         removeLocalToken();
     } catch (err) {
         console.error('Failed to remove login: ', err);
+        return err;
     }
 });
 
@@ -66,6 +80,9 @@ export const slice = createSlice({
         },
         setLogInError: (state: MainState, action: any) => {
             state.logInError = action.payload;
+        },
+        setLogInErrMsg: (state: MainState, action: any) => {
+            state.logInErrMsg = action.payload;
         },
         setUserAccount: (state: MainState, action: any) => {
             state.userAccount = action.payload;
@@ -90,10 +107,13 @@ export const slice = createSlice({
     },
     extraReducers: {
         // Add reducers for additional action types here, and handle loading state as needed
-        [commitGetToken.fulfilled.toString()]: (state, action: PayloadAction<string>) => {
-            state.token = action.payload;
+        [commitGetToken.fulfilled.toString()]: (state, action: PayloadAction<TokenResponse>) => {
+            state.token = action.payload.token;
         },
-        [commitGetUserAccount.fulfilled.toString()]: (state, action: PayloadAction<any>) => {
+        [commitGetUserAccount.fulfilled.toString()]: (
+            state,
+            action: PayloadAction<UserAccResponse>
+        ) => {
             // Add user to the state array
             const userAccountInfo: IUserAccount = {
                 email: '',
@@ -103,11 +123,11 @@ export const slice = createSlice({
                 is_superuser: null
             };
 
-            userAccountInfo.email = action.payload.data.email;
-            userAccountInfo.full_name = action.payload.data.full_name;
-            userAccountInfo.id = action.payload.data.id;
-            userAccountInfo.is_active = action.payload.data.is_active;
-            userAccountInfo.is_superuser = action.payload.data.is_superuser;
+            userAccountInfo.email = action.payload.userAcc.data.email;
+            userAccountInfo.full_name = action.payload.userAcc.data.full_name;
+            userAccountInfo.id = action.payload.userAcc.data.id;
+            userAccountInfo.is_active = action.payload.userAcc.data.is_active;
+            userAccountInfo.is_superuser = action.payload.userAcc.data.is_superuser;
 
             state.userAccount = userAccountInfo;
         },
@@ -122,6 +142,7 @@ export const {
     setToken,
     setLoggedIn,
     setLogInError,
+    setLogInErrMsg,
     setUserAccount,
     setUserProfile,
     setDashboardMiniDrawer,
@@ -136,6 +157,7 @@ export const {
 export const selectIsLoggedIn = (state) => state.main.isLoggedIn;
 export const selectToken = (state) => state.main.token;
 export const selectLogInError = (state) => state.main.logInError;
+export const selectLogInErrMsg = (state) => state.main.logInErrMsg;
 export const selectUserAccount = (state) => state.main.userAccount;
 export const selectUserProfile = (state) => state.main.userProfile;
 export const selectDashboardMiniDrawer = (state) => state.main.dashboardMiniDrawer;

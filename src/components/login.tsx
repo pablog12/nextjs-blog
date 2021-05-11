@@ -1,79 +1,158 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
+import React from 'react';
+// import styled from 'styled-components';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectUserAccount, selectIsLoggedIn } from '../state/main/mainSlice';
+import {
+    selectUserAccount,
+    selectIsLoggedIn,
+    selectLogInError,
+    selectLogInErrMsg
+} from '../state/main/mainSlice';
 
 import { dispatchLogIn, dispatchLogOut } from '../state/main/actions';
 import { useRouter } from 'next/router';
 
-const ButtonLogIn = styled.button`
-    background-color: #4caf50; /* Green */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    border-radius: 12px;
-    transition-duration: 0.4s;
-    margin: 5px;
-    &:hover {
-        background-color: white; /* Green */
-        color: #4caf50;
-        border: 1px solid;
-    }
-`;
+import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import clsx from 'clsx';
+import Grid from '@material-ui/core/Grid';
+import Button from '@material-ui/core/Button';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import Visibility from '@material-ui/icons/Visibility';
+import VisibilityOff from '@material-ui/icons/VisibilityOff';
+import IconButton from '@material-ui/core/IconButton';
+import OutlinedInput from '@material-ui/core/OutlinedInput';
+import Typography from '@material-ui/core/Typography';
 
-const ButtonLogOut = styled(ButtonLogIn)`
-    background-color: #af4c6a;
-    &:hover {
-        color: #af4c6a;
-    }
-`;
+const useStyles = makeStyles((theme: Theme) =>
+    createStyles({
+        root: {
+            display: 'flex',
+            flexWrap: 'wrap'
+        },
+        margin: {
+            margin: theme.spacing(1)
+        },
+        withoutLabel: {
+            marginTop: theme.spacing(3)
+        },
+        textField: {
+            width: '25ch'
+        },
+        errorLaber: {
+            color: 'red'
+        }
+    })
+);
+
+interface State {
+    password: string;
+    username: string;
+    showPassword: boolean;
+}
 
 export function Login() {
-    const [email, setEmail] = useState('admin@thaloz.com');
-    const [password, setPassword] = useState('admin');
-
     const user = useSelector(selectUserAccount);
     const isLoggedIn = useSelector(selectIsLoggedIn);
+    const logInError = useSelector(selectLogInError);
+    const logInErrMsg = useSelector(selectLogInErrMsg);
+    const [values, setValues] = React.useState<State>({
+        password: 'admin',
+        username: 'admin@thaloz.com',
+        showPassword: false
+    });
 
+    const classes = useStyles();
+
+    const handleChange = (prop: keyof State) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        setValues({ ...values, [prop]: event.target.value });
+    };
+    const handleClickShowPassword = () => {
+        setValues({ ...values, showPassword: !values.showPassword });
+    };
+    const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+    };
+
+    // Dispatcher and Router for the Redux store actions.
     const dispatcher = useDispatch();
     const router = useRouter();
 
-    const LogInClick = () => {
-        dispatchLogIn(dispatcher, router, { username: email, password: password });
+    const LogInClick = async () => {
+        dispatchLogIn(dispatcher, router, {
+            username: values.username,
+            password: values.password
+        });
     };
-
     const LogOutClick = () => {
         dispatchLogOut(dispatcher, router);
     };
 
-    let AuthButton;
-
-    if (isLoggedIn) {
-        AuthButton = <ButtonLogOut onClick={LogOutClick}>LogOut</ButtonLogOut>;
-    } else {
-        AuthButton = <ButtonLogIn onClick={LogInClick}>Login</ButtonLogIn>;
-    }
-
     return (
-        <div>
-            <input
-                type="text"
-                name="email"
-                placeholder="user"
-                onChange={(e) => setEmail(e.target.value)}
-                value={email}></input>
-            <input
-                type="password"
-                name="password"
-                id="password"
-                onChange={(e) => setPassword(e.target.value)}
-                value={password}></input>
-            {AuthButton}
-            {isLoggedIn ? <p>Logged in as: {user.email}</p> : <p>Not logged in</p>}
-        </div>
+        <Grid container direction="row" justify="center" alignItems="center">
+            <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined">
+                <InputLabel htmlFor="username">Username</InputLabel>
+                <OutlinedInput
+                    id="username"
+                    value={values.username}
+                    onChange={handleChange('username')}
+                    aria-describedby="outlined-weight-helper-text"
+                    inputProps={{
+                        'aria-label': 'weight'
+                    }}
+                    labelWidth={75}
+                />
+            </FormControl>
+            <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined">
+                <InputLabel htmlFor="password">Password</InputLabel>
+                <OutlinedInput
+                    id="password"
+                    type={values.showPassword ? 'text' : 'password'}
+                    value={values.password}
+                    onChange={handleChange('password')}
+                    endAdornment={
+                        <InputAdornment position="end">
+                            <IconButton
+                                aria-label="toggle password visibility"
+                                onClick={handleClickShowPassword}
+                                onMouseDown={handleMouseDownPassword}
+                                edge="end">
+                                {values.showPassword ? <Visibility /> : <VisibilityOff />}
+                            </IconButton>
+                        </InputAdornment>
+                    }
+                    labelWidth={75}
+                />
+            </FormControl>
+
+            {isLoggedIn ? (
+                <Button variant="contained" color="secondary" size="large" onClick={LogOutClick}>
+                    LogOut
+                </Button>
+            ) : (
+                <Button variant="contained" color="primary" size="large" onClick={LogInClick}>
+                    Login
+                </Button>
+            )}
+            <Grid container direction="column" justify="center" alignItems="center">
+                {isLoggedIn ? (
+                    <Typography variant="caption" gutterBottom>
+                        Logged in as: {user ? user.email : ''}
+                    </Typography>
+                ) : (
+                    <Typography variant="caption" gutterBottom>
+                        Not logged in
+                    </Typography>
+                )}
+
+                {logInError ? (
+                    <Typography variant="caption" className={clsx(classes.errorLaber)} gutterBottom>
+                        {logInErrMsg}
+                    </Typography>
+                ) : (
+                    <></>
+                )}
+            </Grid>
+        </Grid>
     );
 }

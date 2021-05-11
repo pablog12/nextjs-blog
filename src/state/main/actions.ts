@@ -10,7 +10,8 @@ import {
     setToken,
     setUserAccount,
     setUserProfile,
-    commitGetToken
+    commitGetToken,
+    setLogInErrMsg
 } from './mainSlice';
 import { selectToken, selectIsLoggedIn, selectUserAccount } from './mainSlice';
 import { AppNotification } from './state';
@@ -30,19 +31,23 @@ export const actions = {
     async dispatchLogIn(dispatcher, router, payload: { username: string; password: string }) {
         dispatcher(commitGetToken({ username: payload.username, password: payload.password }))
             .then(unwrapResult)
-            .then(async (result) => {
-                if (result) {
+            .then(async (response) => {
+                if (!response.error) {
                     dispatcher(setLoggedIn(true));
                     dispatcher(setLogInError(false));
-                    await dispatchGetUserAccount(dispatcher, router, result);
+                    await dispatchGetUserAccount(dispatcher, router, response.token);
                     // await dispatchRouteLoggedIn(router);
                     dispatcher(addNotification({ content: 'Logged in', color: 'success' }));
+                } else {
+                    throw response.error_message;
                 }
             })
             .catch((error) => {
                 console.error('Failed to login: ', error);
                 dispatcher(setLogInError(true));
+                dispatcher(setLogInErrMsg(error));
                 dispatchLogOut(dispatcher, router);
+                return error;
             });
     },
     async dispatchGetUserAccount(dispatcher, router, token) {
@@ -52,6 +57,7 @@ export const actions = {
                 dispatcher(setUserAccount(response.data));
             }
         } catch (error) {
+            console.error('Failed to get User Account: ', error);
             await dispatchCheckApiError(dispatcher, router, error);
         }
     },
