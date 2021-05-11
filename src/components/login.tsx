@@ -88,43 +88,58 @@ export function Login() {
         dispatchLogOut(dispatcher, router);
     };
 
+    function LoginForm() {
+        if (!isLoggedIn) {
+            return (
+                <>
+                    <FormControl
+                        className={clsx(classes.margin, classes.textField)}
+                        variant="outlined">
+                        <InputLabel htmlFor="username">Username</InputLabel>
+                        <OutlinedInput
+                            id="username"
+                            value={values.username}
+                            onChange={handleChange('username')}
+                            aria-describedby="outlined-weight-helper-text"
+                            inputProps={{
+                                'aria-label': 'weight'
+                            }}
+                            labelWidth={75}
+                        />
+                    </FormControl>
+                    <FormControl
+                        className={clsx(classes.margin, classes.textField)}
+                        variant="outlined">
+                        <InputLabel htmlFor="password">Password</InputLabel>
+                        <OutlinedInput
+                            id="password"
+                            type={values.showPassword ? 'text' : 'password'}
+                            value={values.password}
+                            onChange={handleChange('password')}
+                            endAdornment={
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label="toggle password visibility"
+                                        onClick={handleClickShowPassword}
+                                        onMouseDown={handleMouseDownPassword}
+                                        edge="end">
+                                        {values.showPassword ? <Visibility /> : <VisibilityOff />}
+                                    </IconButton>
+                                </InputAdornment>
+                            }
+                            labelWidth={75}
+                        />
+                    </FormControl>
+                </>
+            );
+        } else {
+            return null;
+        }
+    }
+
     return (
         <Grid container direction="row" justify="center" alignItems="center">
-            <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined">
-                <InputLabel htmlFor="username">Username</InputLabel>
-                <OutlinedInput
-                    id="username"
-                    value={values.username}
-                    onChange={handleChange('username')}
-                    aria-describedby="outlined-weight-helper-text"
-                    inputProps={{
-                        'aria-label': 'weight'
-                    }}
-                    labelWidth={75}
-                />
-            </FormControl>
-            <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined">
-                <InputLabel htmlFor="password">Password</InputLabel>
-                <OutlinedInput
-                    id="password"
-                    type={values.showPassword ? 'text' : 'password'}
-                    value={values.password}
-                    onChange={handleChange('password')}
-                    endAdornment={
-                        <InputAdornment position="end">
-                            <IconButton
-                                aria-label="toggle password visibility"
-                                onClick={handleClickShowPassword}
-                                onMouseDown={handleMouseDownPassword}
-                                edge="end">
-                                {values.showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                        </InputAdornment>
-                    }
-                    labelWidth={75}
-                />
-            </FormControl>
-
+            <LoginForm />
             {isLoggedIn ? (
                 <Button variant="contained" color="secondary" size="large" onClick={LogOutClick}>
                     LogOut
