@@ -1,6 +1,5 @@
 import React from 'react';
 // import styled from 'styled-components';
-import { useSelector, useDispatch } from 'react-redux';
 import {
     selectUserAccount,
     selectIsLoggedIn,
@@ -9,6 +8,7 @@ import {
 } from '../state/main/mainSlice';
 
 import { dispatchLogIn, dispatchLogOut } from '../state/main/actions';
+import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -78,7 +78,9 @@ export function Login() {
     const dispatcher = useDispatch();
     const router = useRouter();
 
-    const LogInClick = async () => {
+    const LogInClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+
         dispatchLogIn(dispatcher, router, {
             username: values.username,
             password: values.password

@@ -170,5 +170,7 @@ export const selectHasAdminAccess = (state) => {
         state.main.userAccount.is_active
     );
 };
-
+export const selectFirstNotification = (state) => {
+    return state.main.notifications.length > 0 && state.main.notifications[0];
+};
 export default slice.reducer;

@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev",
+        "dev": "next dev -p 3000",
         "build": "next build",
         "start": "next start",
         "format": "prettier --ignore-path .gitignore --write . --config ./.prettierrc",
@@ -12,6 +12,7 @@
     "dependencies": {
         "@material-ui/core": "^4.11.4",
         "@material-ui/icons": "^4.11.2",
+        "@material-ui/lab": "^4.0.0-alpha.58",
         "@reduxjs/toolkit": "^1.5.1",
         "axios": "^0.21.1",
         "date-fns": "^2.21.3",
@@ -20,6 +21,7 @@
         "react": "17.0.1",
         "react-dom": "17.0.1",
         "react-redux": "^7.2.4",
+        "recharts": "^2.0.9",
         "redux": "^4.1.0",
         "remark": "^13.0.0",
         "remark-html": "^13.0.1",

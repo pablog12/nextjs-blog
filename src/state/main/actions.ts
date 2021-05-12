@@ -20,12 +20,12 @@ import { unwrapResult } from '@reduxjs/toolkit';
 export const actions = {
     dispatchRouteLoggedIn(router) {
         if (router.pathname === '/login' || router.pathname === '/') {
-            router.push('/main');
+            router.push('/');
         }
     },
     dispatchRouteLogOut(router) {
-        if (router.pathname !== '/') {
-            router.push('/');
+        if (router.pathname !== '/login') {
+            router.push('/login');
         }
     },
     async dispatchLogIn(dispatcher, router, payload: { username: string; password: string }) {
@@ -36,7 +36,7 @@ export const actions = {
                     dispatcher(setLoggedIn(true));
                     dispatcher(setLogInError(false));
                     await dispatchGetUserAccount(dispatcher, router, response.token);
-                    // await dispatchRouteLoggedIn(router);
+                    await dispatchRouteLoggedIn(router);
                     dispatcher(addNotification({ content: 'Logged in', color: 'success' }));
                 } else {
                     throw response.error_message;
